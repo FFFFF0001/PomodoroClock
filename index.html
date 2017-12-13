@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>PomodoroClock</title>
+    <link rel="stylesheet" type="text/css"
+          href="http://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Bitter|Sedgwick+Ave+Display" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://unpkg.com/vue"></script>
+</head>
+<body>
+<h1>MIFind Pomodoro Clock</h1>
+<div class="main">
+    <div class="control">
+        <div class="break">
+            <p>BREAK LENGTH</p>
+            <i v-if="isPause" class="fa fa-minus-square-o" aria-hidden="true" id="break-minus" @click="reduceBreak"></i>
+            <span id="break-length">{{breakLength}}</span>
+            <i v-if="isPause" class="fa fa-plus-square-o" aria-hidden="true" id="break-plus" @click="addBreak"></i>
+        </div>
+        <div class="length">
+            <p>SESSION LENGTH</p>
+            <i v-if="isPause" class="fa fa-minus-square-o" aria-hidden="true" id="session-minus"
+               @click="reduceSession"></i>
+            <span id="session-length">{{sessionLength}}</span>
+            <i v-if="isPause" class="fa fa-plus-square-o" aria-hidden="true" id="session-plus" @click="addSession"></i>
+        </div>
+    </div>
+    <div class="clock" :style="clockBorderStyle" @click="this.playClock">
+        <h2 id="show-title">{{title}}</h2>
+        <i v-if="isPause" class="fa fa-play"></i>
+        <i v-if="!isPause" class="fa fa-pause"></i>
+        <h2 id="show-time">{{time}}</h2>
+        <span :style="spanStyle" id="per"></span>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '.main',
+        watch: {
+            sessionLength: function (newValue, oldValue) {
+                if (!this.breakFlag) {
+                    this.temp = newValue * 60;
+                }
+            },
+            breakLength: function (newValue, oldValue) {
+                if (this.breakFlag) {
+                    this.temp = newValue * 60;
+                }
+            },
+            isPause: function (newValue, oldValue) {
+                this.inIntervalClock();
+            },
+            breakFlag: function (newValue, oldValue) {
+                this.title = newValue ? "Break" : "Session"
+            },
+            temp: function (newValue, oldValue) {
+                if (newValue >= 0) {
+                    let whole = this.breakFlag ? this.breakLength * 60 : this.sessionLength * 60;
+                    let rec = whole - newValue;
+                    let percent = parseInt(rec * 100 / whole);
+                    if(this.breakFlag){
+                        this.spanStyle = `background-color: #D5F7FF;height:${percent}%;`;
+                        this.clockBorderStyle = "border-color:#D5F7FF;"
+                    }else{
+                        this.spanStyle = `background-color: #b5caa0;height:${percent}%;`;
+                        this.clockBorderStyle = "border-color:#B0DEDB;"
+                    }
+                    let min = parseInt(newValue / 60);
+                    let second = parseInt(newValue % 60);
+                    if (second < 10) {
+                        second = "0" + second
+                    }
+                    this.time = `${min}:${second}`
+                } else {
+                    if (this.breakFlag) {
+                        this.temp = this.sessionLength * 60;
+                        this.breakFlag = false;
+                    } else {
+                        this.temp = this.breakLength * 60;
+                        this.breakFlag = true;
+                    }
+                }
+            }
+        },
+        data: {
+            intervalFlag: true,
+            breakFlag: false,
+            title: "Session",
+            isPause: true,
+            breakLength: 5,
+            sessionLength: 25,
+            time: "25:00",
+            temp: 1500,
+            clockBorderStyle: "border-color:#B0DEDB;",
+            spanStyle: `background-color:#b5caa0;height:0%;`,
+        },
+        methods: {
+            reduceBreak() {
+                if (this.isPause && this.breakLength > 0)
+                    this.breakLength--;
+            },
+            addBreak() {
+                if (this.isPause && this.breakLength < 20)
+                    this.breakLength++;
+            },
+            reduceSession() {
+                if (this.isPause && this.sessionLength > 0)
+                    this.sessionLength--;
+            },
+            addSession() {
+                if (this.isPause && this.sessionLength < 60)
+                    this.sessionLength++;
+            },
+            timeBreak() {
+                return true;
+            },
+            playClock() {
+                this.isPause = !this.isPause;
+            },
+            inIntervalClock() {
+                let me = this;
+                if (!this.isPause) {
+                    if (this.intervalFlag) {
+                        this.interval = setInterval(function () {
+                            me.temp--;
+                        }, 1000);
+                        this.intervalFlag = false;
+                    }
+                } else {
+                    clearInterval(this.interval);
+                    this.intervalFlag = true;
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
